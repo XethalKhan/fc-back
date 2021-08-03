@@ -1,0 +1,2 @@
+class TimeSession < ApplicationRecord
+end
