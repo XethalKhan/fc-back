@@ -20,6 +20,7 @@ class User < ApplicationRecord
   validates :email, format: { with: /\A[A-Z0-9._%-]+@[A-Z0-9._%-]+\.[A-Z]{2,4}\z/i, message: "Bad e-mail format" }
 
   # Validation, password must be stored as SHA256.
+  # See https://regex101.com/r/AXhQLz/1
   validates :password, format: {
     with: /\A\b[A-Fa-f0-9]{64}\b\z/,
     message: "DO NOT STORE PLAIN TEXT PASSWORDS IN DB!"
