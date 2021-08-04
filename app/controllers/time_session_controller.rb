@@ -1,8 +1,28 @@
+require 'time'
+
 class TimeSessionController < ApplicationController
 
+  # Error that was solved with StackOverflow.
+  # TODO: Find a link that was used to solve the issue.
   skip_before_action :verify_authenticity_token
 
+  # GET /session
+  # Get all sessions
   def index
+
+    if(params[:token].nil?)
+      response.status = 400
+      render json: {}
+      return
+    end
+
+    session = validate_session(params[:token])
+
+    if session.nil?
+      response.status = 401
+      render json: {}
+      return
+    end
 
     filter = {}
 
@@ -23,7 +43,23 @@ class TimeSessionController < ApplicationController
 
   end
 
+  # GET /session/:id
+  # Get specific session by id
   def show
+
+    if(params[:token].nil?)
+      response.status = 400
+      render json: {}
+      return
+    end
+
+    session = validate_session(params[:token])
+
+    if session.nil?
+      response.status = 401
+      render json: {}
+      return
+    end
 
     begin
       obj = TimeSession.find(params[:id])
@@ -39,51 +75,157 @@ class TimeSessionController < ApplicationController
 
   end
 
+  # POST /session/start
+  # Start a session
+  # For session start to be recorded in database, we demand that client defines start time.
+  # Doing so, client can startthe stopwatch smoothly without interuptions.
+  # If request fails, client can try again with the same request,
+  # while stopwatch keeps counting without interruptions.
+  # TODO: check token.
   def start
+
+    if(params[:token].nil?)
+      response.status = 400
+      render json: {msg: "Token is not defined"}
+      return
+    end
+
+    session = validate_session(params[:token])
+
+    if session.nil?
+      response.status = 401
+      render json: {}
+      return
+    end
+
+    if params[:payload].nil?
+      response.status = 400
+      render json: {msg: "Payload is not defined in request"}
+      return
+    end
+
+    if params[:payload][:date].nil?
+      response.status = 400
+      render json: {msg: "Date field is not defined in request"}
+      return
+    end
+
+    str = params[:payload][:date]
+
+    # https://stackoverflow.com/questions/3143070/javascript-regex-iso-datetime#3143231
+    unless /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/.match?(str)
+      response.status = 400
+      render json: {msg: "date field is in bad format"}
+      return
+    end
+
+    unless session.user.time_sessions.where(end: nil).empty?
+      response.status = 403
+      render json: {}
+      return
+    end
+
+    startTime = Time.parse(str)
+
     obj = TimeSession.new
-    obj.start = Time.now
+    obj.start = startTime
+    obj.user = session.user
     obj.save
 
     response.status = 201
     render json: obj
   end
 
+  # POST /session/end
+  # Finish currently running session
   def end
 
-    obj = TimeSession.find_by(end: nil)
+    if(params[:token].nil?)
+      response.status = 400
+      render json: {msg: "Token is not defined"}
+      return
+    end
 
-    if obj.nil?
+    session = validate_session(params[:token])
+
+    if session.nil?
+      response.status = 401
+      render json: {}
+      return
+    end
+
+    obj = session.user.time_sessions.where(end: nil)
+
+    if obj.empty?
       response.status = 404
       render json: {}
-    else
-      obj.end = Time.now
-      obj.save
-
-      response.status = 204
+      return
     end
+
+    obj[0].end = Time.now
+    obj[0].save
+
+    response.status = 204
 
   end
 
+  # GET /session/active
+  # Get currently running session
   def active
 
-    obj = TimeSession.find_by(end: nil)
+    if(params[:token].nil?)
+      response.status = 400
+      render json: {msg: "Token is not defined"}
+      return
+    end
 
-    p obj
+    session = validate_session(params[:token])
 
-    if obj.nil?
+    if session.nil?
+      response.status = 401
+      render json: {}
+      return
+    end
+
+    obj = session.user.time_sessions.where(end: nil)
+
+    if obj.empty?
       response.status = 404
       render json: {}
     else
       response.status = 200
-      render json: obj
+      render json: obj[0]
     end
 
   end
 
+  # DELETE /session/:id
+  # Delete a session by id
   def destroy
+
+    if(params[:token].nil?)
+      response.status = 400
+      render json: {}
+      return
+    end
+
+    session = validate_session(params[:token])
+
+    if session.nil?
+      response.status = 401
+      render json: {}
+      return
+    end
 
     begin
       obj = TimeSession.find(params[:id])
+
+      unless session.user.id == obj.user.id
+        response.status = 403
+        render json: {}
+        return
+      end
+
       obj.destroy
       response.status = 204
     rescue ActiveRecord::RecordNotFound => e
@@ -91,7 +233,7 @@ class TimeSessionController < ApplicationController
       render json: {}
     rescue Exception => e
       response.status = 500
-      render json: {}
+      render json: {msg: e}
     end
 
   end
