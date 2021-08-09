@@ -13,20 +13,21 @@ default: &default
   adapter: mysql2
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: root
-  password: faksc0ece
-  host: 192.168.0.87
+  username: <%= ENV['MYSQL_USER'] %>
+  password: <%= ENV['MYSQL_PASSWORD'] %>
+  host: <%= ENV['MYSQL_HOST'] %>
+#  database: <%= ENV['MYSQL_DB'] %>
 
 development:
   <<: *default
-  database: fc_back_development
+  database: fc-time-track-development
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: fc_back_test
+  database: fc-time-track-test
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -50,6 +51,6 @@ test:
 #
 production:
   <<: *default
-  database: fc_back_production
-  username: fc_back
-  password: <%= ENV['FC_BACK_DATABASE_PASSWORD'] %>
+  database: <%= ENV['MYSQL_DB'] %>
+#  username: fc_back
+#  password: <%= ENV['FC_BACK_DATABASE_PASSWORD'] %>

@@ -1,0 +1,28 @@
+version: "3.7"
+services:
+  app:
+    image: ruby:2.7.0
+    command: sh -c "bundle install && bin/rails db:migrate && bin/rails"
+    ports:
+      - "3000:3000"
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+      MYSQL_DB: fc-time-track-development
+    depends_on: 
+      - "mysql"
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - fc-mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: fc-time-track-development
+
+volumes:
+  fc-mysql-data:
