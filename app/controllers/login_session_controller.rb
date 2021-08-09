@@ -7,6 +7,14 @@ class LoginSessionController < ApplicationController
   # POST /login
   def login
 
+    p params
+
+    if(params[:payload].nil?)
+      response.status = 400
+      render json: {msg: "Bad request: payload not defined."}
+      return
+    end
+
     if(params[:payload][:email].nil? || params[:payload][:password].nil?)
       response.status = 400
       render json: {msg: "Bad request: e-mail or password is not present in request body."}
@@ -19,19 +27,23 @@ class LoginSessionController < ApplicationController
     )
 
     if obj.nil?
+      # Logically, it should be 404.
+      # But, for authentication, it is better not to provide information
+      # why authentication failed (for example, does the usr even exist,
+      # what part of authentication was wrong, email or password)
       response.status = 403
       render json: {msg: "Access denied."}
       return
     end
 
-    unless obj.is_active
+    if obj.is_active
       response.status = 403
       render json: {msg: "Access denied."}
       return
     end
 
     response.status = 200
-    render json: obj.login
+    render json: obj.login.define_response
 
   end
 

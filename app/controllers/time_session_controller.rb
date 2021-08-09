@@ -26,7 +26,7 @@ class TimeSessionController < ApplicationController
 
     filter = {}
 
-    unless params[:date].nil?
+    if !params[:date].nil? && /\A\d{4}-[01]\d-[0-3]\d\z/.match?(params[:date])
       t = Time.parse(params[:date])
       filter[:start] = t.midnight..(t.midnight + 1.day)
     end

@@ -46,9 +46,13 @@ class User < ApplicationRecord
   #Check if user is already logged in. Return boolean.
   def is_active
 
-    active_session = self.login_sessions.where(end: nil);
+    active_session = self.login_sessions.where(end: nil)
 
     if active_session.empty?
+      return false
+    end
+
+    if active_session.first.valid_token
       return true
     end
 
@@ -59,6 +63,10 @@ class User < ApplicationRecord
   # Get users current active session.
   def active_session
     return self.login_sessions.where(end: nil);
+  end
+
+  def define_response
+    return {id: self.id, full_name: self.full_name, email: self.email}
   end
 
 end

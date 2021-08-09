@@ -44,4 +44,13 @@ class LoginSession < ApplicationRecord
 
   end
 
+  def define_response
+
+    return {
+      token: self.token,
+      user: self.user.define_response
+      }
+
+  end
+
 end
