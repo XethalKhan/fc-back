@@ -2,7 +2,7 @@ version: "3.7"
 services:
   app:
     image: ruby:2.7.0
-    command: sh -c "bundle install && bin/rails db:migrate && bin/rails"
+    command: sh -c "bundle install && bin/rails db:migrate && bin/rails server"
     ports:
       - "3000:3000"
     working_dir: /app
